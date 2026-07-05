@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy 4th of July 🇺🇸</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #020206;
+    color: #fff;
+    letter-spacing: -0.01em;
+}
+
+#flash {
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    z-index: 99;
+    pointer-events: none;
+}
+
+canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    transition: transform 0.05s ease;
+}
+
+/* --- Immersive Intro Layer --- */
+#intro-screen {
+    position: absolute;
+    inset: 0;
+    background: #020206;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+#intro-text {
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    color: #a78bfa;
+    text-align: center;
+    padding: 0 20px;
+    font-weight: 600;
+}
+
+/* Master full screen HUD Container */
+.container {
+    position: relative; 
+    z-index: 2; 
+    width: 100%; 
+    height: 100%; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center;
+    pointer-events: none; 
+}
+
+/* --- Scattered HUD Layout --- */
+.hud {
+    position: absolute;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.hud.ready {
+    opacity: 1;
+}
+
+.top-left {
+    top: 24px;
+    left: 24px;
+    text-align: left;
+}
+
+.top-left h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.02em;
+}
+
+/* Hidden 1776 Easter Egg Subtitle CSS */
+#hidden1776 {
+    opacity: 0;
+    transition: 0.5s;
+    color: #ffd700;
+    letter-spacing: 6px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+#hidden1776.show {
+    opacity: 1;
+}
+
+/* Enhanced Secret Interactive Flag */
+.secret-flag {
+    pointer-events: auto;
+    cursor: pointer;
+    display: inline-block;
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-origin: center;
+}
+.secret-flag.tap-scale {
+    transform: scale(1.15);
+}
+
+@keyframes flagWiggle {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(-8deg); }
+    75% { transform: rotate(8deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes fastWave {
+    0% { transform: scale(1.1) rotate(0deg); }
+    20% { transform: scale(1.1) rotate(-15deg); }
+    40% { transform: scale(1.1) rotate(15deg); }
+    60% { transform: scale(1.1) rotate(-15deg); }
+    80% { transform: scale(1.1) rotate(15deg); }
+    100% { transform: scale(1.1) rotate(0deg); }
+}
+
+.flag-wiggle {
+    animation: flagWiggle 0.5s ease-in-out;
+}
+
+.flag-fast-wave {
+    animation: fastWave 0.3s linear infinite;
+}
+
+.top-left .tagline {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.top-right {
+    top: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.hud-btn {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+
+.hud-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.clock-widget {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+#mobileClock {
+    display: none;
+}
+
+.bottom-left {
+    bottom: 24px;
+    left: 24px;
+    max-width: 320px;
+    text-align: left;
+}
+
+.brand-statement {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+    font-weight: 400;
+}
+
+.brand-statement strong {
+    color: #f43f5e;
+    font-weight: 600;
+}
+
+.btn-action {
+    pointer-events: auto;
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 6px;
+    font-family: inherit;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    background: #f1f5f9;
+}
+
+.bottom-right {
+    bottom: 24px;
+    right: 24px;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.counter-box .num {
+    font-size: 3.2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #00f5d4;
+    letter-spacing: -0.03em;
+}
+
+.counter-box .lbl {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+}
+
+/* --- Dynamic Achievement Notification Overlay --- */
+#achievement-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-200px);
+    background: #1e1b4b;
+    border: 2px solid #a78bfa;
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 10px;
+    z-index: 9999;
+    pointer-events: none;
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#achievement-toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+#achievement-toast h4 {
+    color: #ffd700;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-weight: 700;
+}
+
+#achievement-toast p {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* Milestone Full Overlay Viewports */
+#milestone-banner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 80;
+    pointer-events: none;
+    background: rgba(2,2,6,0.75);
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+#milestone-banner.show { opacity: 1; }
+#milestone-text { font-size: clamp(1.6rem, 5vw, 3.2rem); font-weight: 800; text-align: center; padding: 20px; line-height: 1.4; letter-spacing: -0.02em; }
+
+/* --- Production-grade Dashboard UI Overlays --- */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 2, 6, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.modal:not(.hidden) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: #0f111a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 28px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 75vh;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    transform: scale(0.95);
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal:not(.hidden) .modal-content {
+    transform: scale(1);
+}
+
+.modal-content h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+}
+
+.modal-subtitle {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+#achievement-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding-right: 4px;
+}
+
+/* Custom modern scrollbar for card viewports */
+#achievement-list::-webkit-scrollbar {
+    width: 6px;
+}
+#achievement-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+#achievement-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.ach-item {
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.ach-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ach-item-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.ach-item-desc {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    line-height: 1.3;
+}
+
+.ach-item-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background: rgba(0, 245, 212, 0.1);
+    color: #00f5d4;
+    white-space: nowrap;
+}
+
+.ach-item.locked {
+    background: rgba(255, 255, 255, 0.01);
+    border-color: rgba(255, 255, 255, 0.02);
+}
+
+.ach-item.locked .ach-item-title {
+    color: #64748b;
+}
+
+.ach-item.locked .ach-item-desc {
+    color: #475569;
+}
+
+.ach-item.locked .ach-item-status {
+    background: rgba(255, 255, 255, 0.05);
+    color: #64748b;
+}
+
+.btn-modal-close {
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+    text-align: center;
+}
+
+.btn-modal-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* --- Ergonomic Mobile Layout Pipeline --- */
+@media (max-width: 768px) {
+    .container {
+        pointer-events: none;
+    }
+    .top-left {
+        top: 16px;
+        left: 16px;
+        z-index: 20;
+    }
+    .top-left h1 {
+        font-size: 1.45rem;
+    }
+    .top-left .tagline {
+        font-size: 0.72rem;
+        max-width: 170px;
+    }
+    
+    .top-right {
+        position: static !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-end !important;
+        gap: 8px !important;
+        margin-top: 4px;
+    }
+    
+    .hud-btn {
+        padding: 9px 16px;
+        font-size: 0.72rem;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 20px;
+        width: 110px;
+        justify-content: center;
+    }
+
+    .clock-widget {
+        display: none;
+    }
+    
+    #mobileClock {
+        display: block;
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        font-size: 0.78rem;
+        color: #cbd5e1;
+        z-index: 25;
+        font-weight: 600;
+    }
+    
+    .bottom-left {
+        left: 16px;
+        bottom: 18px;
+        max-width: 180px;
+        position: absolute !important;
+    }
+    .brand-statement {
+        font-size: 0.7rem;
+    }
+    .btn-action {
+        padding: 10px 14px;
+        font-size: 0.72rem;
+    }
+    
+    .bottom-right {
+        right: 16px;
+        bottom: 18px;
+        position: absolute !important;
+        gap: 8px;
+    }
+    .counter-box .num {
+        font-size: 2.4rem;
+    }
+}
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.btn-modal-reset {
+    background: rgba(255, 80, 80, 0.12);
+    border: 1px solid rgba(255, 80, 80, 0.35);
+    color: #ff6b6b;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.btn-modal-reset:hover {
+    background: rgba(255, 80, 80, 0.22);
+    transform: translateY(-1px);
+}
+</style>
+</head>
+<body>
+
+<div id="flash"></div>
+
+<div id="intro-screen">
+    <div id="intro-text">Go ahead. Launch the first firework. 🇺🇸</div>
+</div>
+
+<div id="achievement-toast">
+    <h4>🏆 Achievement Unlocked</h4>
+    <p id="toast-body"></p>
+</div>
+
+<div id="milestone-banner">
+    <div id="milestone-text"></div>
+</div>
+
+<div id="achievement-modal" class="modal hidden">
+    <div class="modal-content">
+        <h2>🏆 Achievements</h2>
+        <div class="modal-subtitle" id="modal-completion-ratio">Completed: 0/0</div>
+        <div id="achievement-list"></div>
+<div class="modal-footer">
+    <button class="btn-modal-close" id="close-achievements">Close</button>
+    <button class="btn-modal-reset" id="reset-achievements">Reset Progress</button>
+</div>
+    </div>
+</div>
+
+<div id="reset-confirm" class="modal hidden">
+    <div class="modal-content">
+        <h2>⚠️ Reset Progress?</h2>
+        <div class="modal-subtitle">
+            This will delete all unlocked achievements and reset your fireworks count.
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-modal-reset" id="confirm-reset">Yes, Reset</button>
+            <button class="btn-modal-close" id="cancel-reset">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<div class="container">
+    <div class="hud top-left">
+        <h1>Happy 4th <span class="secret-flag" id="flagBtn">🇺🇸</span></h1>
+        <div id="hidden1776">1776</div>
+        <div class="tagline">Try to stop after one firework. I dare you.</div>
+    </div>
+    
+    <div id="mobileClock">--:--</div>
+
+    <div class="hud bottom-left">
+        <div class="brand-statement">
+            Didn’t buy fireworks this year… so I built them instead. 🇺🇸 Crafted with ❤️ by <strong>Jarock Web Design</strong>.
+        </div>
+        <button class="btn-action" id="finale">START GRAND FINALE</button>
+    </div>
+
+    <div class="hud bottom-right">
+        <div class="counter-box">
+            <div class="num" id="count">0</div>
+            <div class="lbl">Fireworks Popped</div>
+        </div>
+        
+        <div class="top-right">
+            <button class="hud-btn" id="open-achievements">🏆 Badges</button>
+            <button class="hud-btn" id="audioToggle">🔊 Audio</button>
+            <button class="hud-btn" id="shareBtn">Share</button>
+            <div class="clock-widget" id="clock">--:--</div>
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const flashEl = document.getElementById("flash");
+const flagBtn = document.getElementById("flagBtn");
+
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+window.addEventListener("resize", () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+});
+
+// --- Sound Vector Engine ---
+let audioMuted = true;
+let audioCtx = null;
+
+function playPopSound() {
+    if (audioMuted) return;
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const bufferSize = audioCtx.sampleRate * 0.12; 
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+        const noiseNode = audioCtx.createBufferSource();
+        noiseNode.buffer = buffer;
+
+        const lpFilter = audioCtx.createBiquadFilter();
+        lpFilter.type = 'lowpass';
+        lpFilter.frequency.setValueAtTime(250, audioCtx.currentTime);
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+
+        noiseNode.connect(lpFilter);
+        lpFilter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        noiseNode.start();
+    } catch(e) {}
+}
+
+document.getElementById("audioToggle").onclick = (e) => {
+    e.stopPropagation();
+    audioMuted = !audioMuted;
+    document.getElementById("audioToggle").innerHTML = audioMuted ? "🔊 Audio" : "🔈 Mute";
+};
+
+// --- Structured Declarative Achievement System Mapping ---
+const achievements = [
+
+  // ---------------- BASIC PROGRESSION ----------------
+  { id: "first_launch", title: "🎆 First Launch", desc: "Launch your first firework", condition: (c) => c >= 1 },
+  { id: "warming_up", title: "💥 Warming Up", desc: "Launch 10 fireworks", condition: (c) => c >= 10 },
+  { id: "spark_chaser", title: "✨ Spark Chaser", desc: "Launch 25 fireworks", condition: (c) => c >= 25 },
+  { id: "firework_fan", title: "🎇 Firework Fan", desc: "Launch 50 fireworks", condition: (c) => c >= 50 },
+  { id: "sky_painter", title: "🚀 Sky Painter", desc: "Launch 100 fireworks", condition: (c) => c >= 100 },
+
+  { id: "lucky_177", title: "🇺🇸 Lucky 177", desc: "Hit 177 fireworks", condition: (c) => c >= 177 },
+  { id: "pyrotechnician", title: "🔥 Pyrotechnician", desc: "Launch 250 fireworks", condition: (c) => c >= 250 },
+  { id: "expert", title: "🎉 Firework Expert", desc: "Launch 500 fireworks", condition: (c) => c >= 500 },
+  { id: "legend", title: "👑 Firework Legend", desc: "Reach 1,000 fireworks", condition: (c) => c >= 1000 },
+
+  // ---------------- MILESTONES ----------------
+  { id: "freedom_1776", title: "🦅 WE GOT FREEDOM", desc: "Reach 1,776 fireworks", condition: (c) => c >= 1776 },
+  { id: "still_free_2026", title: "🇺🇸 STILL FREE", desc: "Reach 2,026 fireworks", condition: (c) => c >= 2026 },
+
+  { id: "take_a_break", title: "🤔 Taking This Seriously", desc: "Reach 2,500 fireworks", condition: (c) => c >= 2500 },
+  { id: "finger_okay", title: "😂 Your Finger Okay?", desc: "Reach 5,000 fireworks", condition: (c) => c >= 5000 },
+  { id: "hydration", title: "☕ Hydration Break", desc: "Reach 7,500 fireworks", condition: (c) => c >= 7500 },
+  { id: "crazy_mode", title: "🤯 You Are Crazy", desc: "Reach 9,999 fireworks", condition: (c) => c >= 9999 },
+
+  { id: "diamond", title: "💎 Diamond Fireworks", desc: "Reach 10,000 fireworks", condition: (c) => c >= 10000 },
+  { id: "oddly_satisfying", title: "🔢 Oddly Satisfying", desc: "Hit 12,345 fireworks", condition: (c) => c >= 12345 },
+
+  { id: "freedom_x10", title: "🦅 Freedom Forever", desc: "Hit 17,760 fireworks", condition: (c) => c >= 17760 },
+  { id: "pro_tester", title: "🎖️ Professional Tester", desc: "Reach 25,000 fireworks", condition: (c) => c >= 25000 },
+
+  { id: "fire_department", title: "🚒 Fire Department Concerned", desc: "Reach 50,000 fireworks", condition: (c) => c >= 50000 },
+  { id: "break_time", title: "😂 Do Your Fingers Need a Break?", desc: "Reach 75,000 fireworks", condition: (c) => c >= 75000 },
+
+  { id: "blind_mode", title: "😵 HOW ARE YOU NOT BLIND?!", desc: "Reach 100,000 fireworks", condition: (c) => c >= 100000 },
+  { id: "america_fan", title: "🇺🇸 America’s Biggest Fan", desc: "Reach 177,600 fireworks", condition: (c) => c >= 177600 },
+
+  { id: "orbit", title: "🚀 Orbit Bound", desc: "Reach 250,000 fireworks", condition: (c) => c >= 250000 },
+  { id: "never_ends", title: "🌌 This Show Never Ends", desc: "Reach 500,000 fireworks", condition: (c) => c >= 500000 },
+
+  { id: "legendary", title: "🏆 Freedom Legend", desc: "Reach 1,000,000 fireworks", condition: (c) => c >= 1000000 },
+
+  // ---------------- SYSTEM / SECRET ACHIEVEMENTS ----------------
+  { id: "rapid_fire", title: "💥 Rapid Fire", desc: "10 explosions in 5 seconds", condition: () => false },
+  { id: "flag_fanatic", title: "🇺🇸 Flag Fanatic", desc: "Tap the flag 10 times", condition: () => false },
+  { id: "history_buff", title: "📜 History Buff", desc: "Discover the hidden 1776 text", condition: () => false },
+  { id: "collector", title: "⭐ Collector", desc: "Unlock all firework styles", condition: () => false },
+  { id: "heart_america", title: "❤️ Heart of America", desc: "Find the heart explosion", condition: () => false }
+,
+{ id: "flag_first", title: "🇺🇸 First Salute", desc: "Tap the flag once", condition: () => false },
+
+{ id: "flag_curious", title: "🤨 Flag Curious", desc: "Tap the flag 5 times", condition: () => false },
+
+{ id: "flag_fanatic", title: "🇺🇸 Flag Fanatic", desc: "Tap the flag 10 times", condition: () => false },
+
+{ id: "flag_patriot", title: "🦅 Patriot Mode", desc: "Tap the flag 25 times", condition: () => false },
+
+{ id: "flag_addicted", title: "😂 Okay You Like The Flag", desc: "Tap the flag 50 times", condition: () => false }
+];
+
+// Persistent state mapping sync
+let unlockedAchievements = new Set(JSON.parse(localStorage.getItem("site_achievements") || "[]"));
+
+function saveAchievements() {
+    localStorage.setItem("site_achievements", JSON.stringify([...unlockedAchievements]));
+}
+
+function checkAchievements() {
+    achievements.forEach(a => {
+        if (unlockedAchievements.has(a.id)) return;
+        if (a.condition && a.condition(count)) {
+            unlockAchievementById(a.id);
+        }
+    });
+}
+
+function unlockAchievementById(id) {
+    if (unlockedAchievements.has(id)) return;
+    const item = achievements.find(a => a.id === id);
+    if (!item) return;
+
+    unlockedAchievements.add(id);
+    saveAchievements();
+    triggerToast(`${item.title} — ${item.desc}`);
+    
+    if (document.getElementById("achievement-modal").classList.contains("hidden") === false) {
+        renderAchievementModal();
+    }
+}
+
+// --- Interactive State Mapping ---
+let rAndWAndB = ["#ff2a5f", "#ffffff", "#2882ff"];
+const colors = ["#ff2a5f", "#ffffff", "#2882ff", "#ffcc00", "#9d4edd", "#00f5d4"];
+
+let rockets = [];
+let particles = [];
+let stars = [];
+let smoke = [];
+let cursorSparkles = [];
+let confettis = [];
+let eagle = null;
+
+let count = 0; // Session resets completely on generation reloads
+let flagClicks = 0;
+let introComplete = false;
+let clickHistory = [];
+let discoveredStyles = new Set();
+let flagClickHistory = [];
+for(let i=0; i<55; i++) {
+    stars.push({ x: Math.random()*width, y: Math.random()*height*0.75, size: Math.random()*2, alpha: Math.random(), speed: 0.004 });
+}
+
+function triggerToast(bodyText) {
+    document.getElementById("toast-body").textContent = bodyText;
+    const t = document.getElementById("achievement-toast");
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+function triggerShake() {
+    canvas.style.transform = `translate(${(Math.random()-0.5)*10}px, ${(Math.random()-0.5)*10}px)`;
+    setTimeout(() => canvas.style.transform = 'translate(0px, 0px)', 50);
+}
+
+function spawnConfetti() {
+    for(let i=0; i<100; i++) {
+        confettis.push({
+            x: Math.random()*width, y: -20, size: Math.random()*6+5,
+            color: rAndWAndB[Math.floor(Math.random()*3)],
+            vy: Math.random()*3+2, vx: (Math.random()-0.5)*3, rot: Math.random()*Math.PI
+        });
+    }
+}
+
+function runMassiveBurst(amount, palette = null) {
+    let fired = 0;
+    const inv = setInterval(() => {
+        rockets.push(new Rocket(Math.random()*width, Math.random()*height*0.45 + 50, palette));
+        fired++; if(fired >= amount) clearInterval(inv);
+    }, 70);
+}
+
+// --- Special Milestone Event Processor ---
+function checkMilestoneEvents(val) {
+    const banner = document.getElementById("milestone-banner");
+    const txt = document.getElementById("milestone-text");
+    let showOverlay = true;
+
+    if (val === 1776) {
+        txt.innerHTML = "<span style='font-size:2rem; display:block; margin-bottom:10px;'>🇺🇸</span>" +
+                        "<span style='color:#ffd700; font-size:3.5rem; font-weight:900; letter-spacing:4px; display:block; line-height:1.1; margin-bottom:10px;'>1776</span>" +
+                        "<span style='color:#fff; display:block; font-size:2.2rem; font-weight:800; text-transform:uppercase; margin-bottom:12px;'>WE GOT FREEDOM!</span>" +
+                        "<span style='color:#64748b; font-size:1.1rem; font-weight:500; display:block;'>Happy Independence Day</span>";
+        
+        flashEl.style.opacity = "0.5"; setTimeout(() => flashEl.style.opacity = "0", 150);
+        spawnConfetti();
+        runMassiveBurst(75, rAndWAndB);
+    } else if (val === 2026) {
+        txt.innerHTML = "🎆 STILL FREE ❤️🤍💙";
+        let duration = 0;
+        eagle = { x: -80, y: height * 0.2, speed: 4.5 };
+        const patrioticShow = setInterval(() => {
+            rockets.push(new Rocket(Math.random()*width, Math.random()*height*0.45 + 50));
+            duration++; if (duration >= 40) clearInterval(patrioticShow);
+        }, 500);
+    } else {
+        showOverlay = false;
+    }
+
+    if (showOverlay) {
+        banner.classList.add("show");
+        setTimeout(() => banner.classList.remove("show"), 6000);
+    }
+}
+
+// --- Vectors & Classes Engine ---
+class Particle {
+    constructor(x, y, color, angle, speed, type) {
+        this.x = x; this.y = y; this.color = color; this.angle = angle; this.speed = speed;
+        this.alpha = 1; this.decay = Math.random()*0.015 + 0.008; this.type = type;
+        this.history = [];
+    }
+    update() {
+        this.history.push({x: this.x, y: this.y});
+        if (this.history.length > 4) this.history.shift();
+        this.speed *= this.type === 'palm' ? 0.93 : 0.95;
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed + 0.06;
+        this.alpha -= this.decay;
+    }
+    draw() {
+        if(this.history.length < 1) return;
+        ctx.beginPath(); ctx.moveTo(this.history[0].x, this.history[0].y);
+        for(let p of this.history) ctx.lineTo(p.x, p.y);
+        ctx.strokeStyle = this.color; ctx.globalAlpha = this.alpha;
+        ctx.lineWidth = 2; ctx.stroke();
+    }
+}
+
+class Rocket {
+    constructor(tx, ty, palette = null) {
+        if (tx === "flagSource") {
+            const flagRect = flagBtn.getBoundingClientRect();
+            this.x = flagRect.left + (flagRect.width / 2);
+            this.y = flagRect.top + (flagRect.height / 2);
+            this.tx = Math.random() * (width * 0.4) + 40;
+            this.ty = Math.random() * (height * 0.4) + 40;
+        } else {
+            this.x = width / 2 + (Math.random() - 0.5) * (width * 0.3);
+            this.y = height; this.tx = tx; this.ty = ty;
+        }
+        this.palette = palette;
+        const dx = this.tx - this.x; const dy = this.ty - this.y;
+        this.angle = Math.atan2(dy, dx); this.distance = Math.sqrt(dx*dx + dy*dy);
+        this.speed = 14; this.traveled = 0;
+    }
+    update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        this.traveled += this.speed;
+        return this.traveled < this.distance;
+    }
+    draw() {
+        ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+        ctx.fillStyle = "#fff"; ctx.globalAlpha = 0.6; ctx.fill();
+    }
+}
+
+function explode(x, y, palette = null) {
+    const styles = ["round", "ring", "star", "heart", "palm"];
+    const chosenStyle = styles[Math.floor(Math.random() * styles.length)];
+    const pal = palette || colors;
+    const clr = pal[Math.floor(Math.random() * pal.length)];
+
+    discoveredStyles.add(chosenStyle);
+    if(discoveredStyles.size === 5) unlockAchievementById("collector");
+    if(chosenStyle === "heart") unlockAchievementById("heart_america");
+
+    flashEl.style.opacity = "0.15";
+    setTimeout(() => flashEl.style.opacity = "0", 40);
+    playPopSound();
+
+    smoke.push({ x: x, y: y, size: 25, alpha: 0.18 });
+
+    let amt = chosenStyle === "palm" ? 30 : 60;
+    for (let i = 0; i < amt; i++) {
+        let angle, speed;
+        if (chosenStyle === "round" || chosenStyle === "palm") {
+            angle = Math.random() * Math.PI * 2; speed = Math.random() * 5 + 1;
+        } else if (chosenStyle === "ring") {
+            angle = (i / amt) * Math.PI * 2; speed = 4;
+        } else if (chosenStyle === "star") {
+            let arm = Math.floor(i / (amt / 5));
+            angle = (arm * (Math.PI * 2 / 5)) + (Math.random() * 0.05);
+            speed = (i % 2 === 0) ? 5 : 2;
+        } else if (chosenStyle === "heart") {
+            let step = (i / amt) * Math.PI * 2;
+            let hx = 16 * Math.pow(Math.sin(step), 3);
+            let hy = -(13 * Math.cos(step) - 5 * Math.cos(2*step) - 2 * Math.cos(3*step) - Math.cos(4*step));
+            angle = Math.atan2(hy, hx); speed = Math.sqrt(hx*hx + hy*hy) * 0.25;
+        }
+        particles.push(new Particle(x, y, clr, angle, speed, chosenStyle));
+    }
+
+    count++;
+    document.getElementById("count").textContent = count.toLocaleString();
+    checkAchievements();
+    checkMilestoneEvents(count);
+}
+
+// --- Dynamic Modal Rendering Engine ---
+function renderAchievementModal() {
+    const list = document.getElementById("achievement-list");
+    list.innerHTML = "";
+    
+    achievements.forEach(a => {
+        const unlocked = unlockedAchievements.has(a.id);
+        const div = document.createElement("div");
+        div.className = "ach-item" + (unlocked ? "" : " locked");
+        
+        div.innerHTML = `
+            <div class="ach-item-info">
+                <span class="ach-item-title">${a.title}</span>
+                <span class="ach-item-desc">${a.desc}</span>
+            </div>
+            <div class="ach-item-status">${unlocked ? "Unlocked" : "Locked"}</div>
+        `;
+        list.appendChild(div);
+    });
+
+    document.getElementById("modal-completion-ratio").textContent = `Completed: ${unlockedAchievements.size} / ${achievements.length}`;
+}
+
+// Control toggles
+document.getElementById("open-achievements").onclick = (e) => {
+    e.stopPropagation();
+    document.getElementById("achievement-modal").classList.remove("hidden");
+    renderAchievementModal();
+};
+
+document.getElementById("close-achievements").onclick = (e) => {
+    e.stopPropagation();
+    document.getElementById("achievement-modal").classList.add("hidden");
+};
+
+// Clicking outside content shell closes modular pane
+document.getElementById("achievement-modal").onclick = (e) => {
+    if (e.target === document.getElementById("achievement-modal")) {
+        document.getElementById("achievement-modal").classList.add("hidden");
+    }
+};
+
+// --- Automation loops ---
+function randomFlagWiggle() {
+    setTimeout(() => {
+        if (!flagBtn.classList.contains("flag-fast-wave")) {
+            flagBtn.classList.add("flag-wiggle");
+            setTimeout(() => flagBtn.classList.remove("flag-wiggle"), 500);
+        }
+        randomFlagWiggle();
+    }, Math.random() * 7000 + 8000);
+}
+randomFlagWiggle();
+
+// --- Dynamic Event Listeners ---
+window.addEventListener("pointerdown", (e) => {
+    if (!introComplete) {
+        introComplete = true;
+        document.getElementById("intro-screen").style.display = "none";
+        document.querySelectorAll(".hud").forEach(el => el.classList.add("ready"));
+        rockets.push(new Rocket(width / 2, height * 0.35));
+        return;
+    }
+
+    if (e.target.tagName === 'BUTTON' || e.target.closest('#flagBtn') || e.target.closest('.modal-content')) return;
+
+    const now = Date.now();
+    clickHistory = clickHistory.filter(t => now - t < 5000);
+    clickHistory.push(now);
+    if (clickHistory.length >= 10) unlockAchievementById("rapid_fire");
+
+    rockets.push(new Rocket(e.clientX, e.clientY));
+});
+
+window.addEventListener("pointermove", (e) => {
+    if (introComplete && Math.random() < 0.2) {
+        cursorSparkles.push({
+            x: e.clientX, y: e.clientY, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2,
+            alpha: 1, color: colors[Math.floor(Math.random()*colors.length)]
+        });
+    }
+});
+
+flagBtn.onclick = (e) => {
+    e.stopPropagation();
+    if (!introComplete) return;
+
+    const now = Date.now();
+
+    flagClicks++;
+
+    // animation
+    flagBtn.classList.add("tap-scale");
+    setTimeout(() => flagBtn.classList.remove("tap-scale"), 150);
+
+    // track rapid taps (for future expansions)
+    flagClickHistory = flagClickHistory.filter(t => now - t < 10000);
+    flagClickHistory.push(now);
+
+    // ---------------- FLAG ACHIEVEMENTS ----------------
+
+    if (flagClicks === 1) {
+        unlockAchievementById("flag_first");
+    }
+
+    if (flagClicks === 5) {
+        unlockAchievementById("flag_curious");
+    }
+
+    if (flagClicks === 10) {
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                rockets.push(new Rocket("flagSource", null, rAndWAndB));
+            }, i * 150);
+        }
+        unlockAchievementById("flag_fanatic");
+    }
+
+    if (flagClicks === 25) {
+        unlockAchievementById("flag_patriot");
+        spawnConfetti();
+    }
+
+    if (flagClicks === 50) {
+        unlockAchievementById("flag_addicted");
+        flagBtn.classList.add("flag-fast-wave");
+
+        setTimeout(() => {
+            flagBtn.classList.remove("flag-fast-wave");
+        }, 4000);
+    }
+
+    if (flagClicks === 100) {
+        document.getElementById("hidden1776").classList.add("show");
+        unlockAchievementById("history_buff");
+
+        runMassiveBurst(20, rAndWAndB);
+    }
+};
+
+document.getElementById("finale").onclick = (e) => {
+    e.stopPropagation();
+    runMassiveBurst(30);
+};
+
+document.getElementById("shareBtn").onclick = (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(window.location.href);
+    const sBtn = document.getElementById("shareBtn");
+    sBtn.innerHTML = "Copied";
+    setTimeout(() => sBtn.innerHTML = "Share", 2000);
+};
+
+// --- Animation Pipeline Loop ---
+function animate() {
+    ctx.fillStyle = "rgba(2, 2, 6, 0.25)";
+    ctx.fillRect(0, 0, width, height);
+
+    stars.forEach(s => {
+        s.alpha += 0.01; if(s.alpha > 1) s.alpha = 0;
+        ctx.fillStyle = "#fff"; ctx.globalAlpha = s.alpha;
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+    });
+
+    if (eagle) {
+        eagle.x += eagle.speed; ctx.font = "36px sans-serif"; ctx.globalAlpha = 0.8;
+        ctx.fillText("🦅", eagle.x, eagle.y);
+        if (eagle.x > width + 100) eagle = null;
+    }
+
+    confettis = confettis.filter(c => c.y < height + 10);
+    confettis.forEach(c => {
+        c.y += c.vy; c.x += c.vx; c.rot += 0.04;
+        ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot);
+        ctx.fillStyle = c.color; ctx.globalAlpha = 0.8;
+        ctx.fillRect(-c.size/2, -c.size/2, c.size, c.size); ctx.restore();
+    });
+
+    smoke = smoke.filter(s => s.alpha > 0);
+    smoke.forEach(s => {
+        s.alpha -= 0.005; ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+        ctx.fillStyle = "rgba(100, 110, 125, 0.04)"; ctx.globalAlpha = s.alpha; ctx.fill();
+    });
+
+    cursorSparkles = cursorSparkles.filter(s => s.alpha > 0);
+    cursorSparkles.forEach(s => {
+        s.x += s.vx; s.y += s.vy; s.alpha -= 0.04;
+        ctx.beginPath(); ctx.arc(s.x, s.y, 1.5, 0, Math.PI*2);
+        ctx.fillStyle = s.color; ctx.globalAlpha = s.alpha; ctx.fill();
+    });
+
+    rockets = rockets.filter(r => {
+        const alive = r.update();
+        if(!alive) explode(r.tx, r.ty, r.palette);
+        else r.draw();
+        return alive;
+    });
+
+    particles = particles.filter(p => p.alpha > 0);
+    particles.forEach(p => { p.update(); p.draw(); });
+
+    requestAnimationFrame(animate);
+}
+
+function updateClock() {
+    const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    document.getElementById("clock").textContent = time;
+    const mobile = document.getElementById("mobileClock");
+    if (mobile) mobile.textContent = time;
+}
+
+animate();
+updateClock();
+setInterval(updateClock, 1000);
+
+document.getElementById("reset-achievements").onclick = (e) => {
+    e.stopPropagation();
+    document.getElementById("reset-confirm").classList.remove("hidden");
+};
+
+document.getElementById("cancel-reset").onclick = (e) => {
+    e.stopPropagation();
+    document.getElementById("reset-confirm").classList.add("hidden");
+};
+
+document.getElementById("confirm-reset").onclick = (e) => {
+    e.stopPropagation();
+
+    unlockedAchievements.clear();
+    localStorage.removeItem("site_achievements");
+
+    count = 0;
+    flagClicks = 0;
+
+    document.getElementById("count").textContent = "0";
+
+    renderAchievementModal();
+    triggerToast("🔄 Progress Reset");
+
+    document.getElementById("reset-confirm").classList.add("hidden");
+};
+</script>
+</body>
+</html>
